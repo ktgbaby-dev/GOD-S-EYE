@@ -172,7 +172,7 @@ godseye/
   discovery/                   base.py (provider contract), audius.py, youtube.py, websearch.py, engine
 frontend/
   login.html app.html          login gate (public) and app shell (served only with a session)
-  public/                      shared tokens, login assets, favicon
+  shared/                      shared tokens, login assets, favicon (not "public/": Vercel strips that folder name)
   app/                         app.css, js/app.js (router), js/ui.js, js/views/*
 tests/                         test_engine.py, test_api.py, test_discovery.py (local fake sources)
 tools/seed_demo.py             development demo data (separate database)

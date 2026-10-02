@@ -18,6 +18,10 @@ from .config import ROOT, Config, get_config
 from .db import Database
 
 FRONTEND = ROOT / "frontend"
+# Don't name frontend folders public/, static/ or assets/: Vercel treats those names specially and leaves them out
+# of the Python function bundle (the cause of the blank first deploy).
+REQUIRED_FILES = ("login.html", "app.html", "shared/base.css", "shared/login.css", "shared/login.js",
+                  "shared/favicon.svg", "app/app.css", "app/js/app.js", "app/js/api.js", "app/js/ui.js")
 MAX_BODY = 6 * 1024 * 1024
 APP_PAGES = re.compile(r"^/(dashboard|today|discover|leads|leads/\d+|follow-ups|analytics|strategy|settings|import)/?$")
 CSP = ("default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
@@ -138,6 +142,9 @@ def setup(cfg: Config | None = None, db: Database | None = None, reset: bool = F
         _state.clear()
         cfg = cfg or get_config()
         problems = cfg.problems()
+        missing = [f for f in REQUIRED_FILES if not (FRONTEND / f).is_file()]
+        if missing:  # e.g. a host that strips a folder from the bundle: say so instead of serving a blank page
+            problems.append("This deployment is missing frontend files: " + ", ".join(missing) + ".")
         if not problems and db is None:
             try:
                 db = Database(cfg)
@@ -206,9 +213,9 @@ def handle(req: Request, problems: list[str]) -> Response:
     if path == "/robots.txt":
         return Response(200, "User-agent: *\nDisallow: /\n", "text/plain; charset=utf-8")
     if path == "/favicon.ico":
-        return redirect("/public/favicon.svg")
-    if path.startswith("/public/"):
-        return _file(FRONTEND / "public", path[len("/public/"):], "public, max-age=3600") or _not_found()
+        return redirect("/shared/favicon.svg")
+    if path.startswith("/shared/"):
+        return _file(FRONTEND / "shared", path[len("/shared/"):], "public, max-age=3600") or _not_found()
     if path == "/login":
         if not problems and _authed(req):
             return redirect(_safe_next(req.arg("next")))

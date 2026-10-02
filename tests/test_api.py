@@ -31,7 +31,7 @@ class AuthTests(unittest.TestCase):
         self.assertEqual(self.c.post("/api/leads", {"handle": "x", "platform": "instagram"}).status, 401)
         # The login page and its own assets are public.
         self.assertEqual(self.c.get("/login").status, 200)
-        self.assertEqual(self.c.get("/public/login.js").status, 200)
+        self.assertEqual(self.c.get("/shared/login.js").status, 200)
         self.assertNotIn("dashboard", self.c.get("/login").text.lower().replace("/dashboard", ""))
 
     def test_login_logout_cycle(self):
@@ -102,6 +102,37 @@ class AuthTests(unittest.TestCase):
         self.assertEqual(c.login("").status, 503)
         self.assertEqual(c.get("/dashboard").status, 302)
         fresh_app(GODS_EYE_PASSWORD=helpers.TEST_PASSWORD)
+
+    def test_every_referenced_asset_is_served(self):
+        # Regression: on Vercel a folder named public/ was dropped from the bundle and the pages rendered blank.
+        reserved = {"public", "static", "assets"}
+        dirs = {p.name for p in (ROOT / "frontend").rglob("*") if p.is_dir()}
+        self.assertFalse(dirs & reserved, "Vercel strips these folder names from the Python bundle")
+        login_refs = re.findall(r'(?:href|src)="(/[^"]+)"', (ROOT / "frontend" / "login.html").read_text("utf-8"))
+        app_refs = re.findall(r'(?:href|src)="(/(?:shared|app)/[^"]+)"', (ROOT / "frontend" / "app.html").read_text("utf-8"))
+        for ref in login_refs:
+            self.assertEqual(self.c.get(ref).status, 200, ref)
+        self.c.login()
+        for ref in app_refs:
+            self.assertEqual(self.c.get(ref).status, 200, ref)
+        views = re.findall(r'import\("\./views/([a-z]+\.js)"\)', (ROOT / "frontend/app/js/app.js").read_text("utf-8"))
+        self.assertGreaterEqual(len(views), 10)
+        for v in views + ["addlead.js"]:
+            self.assertEqual(self.c.get(f"/app/js/views/{v}").status, 200, v)
+        self.assertTrue(self.c.get("/api/setup").json["configured"])
+
+    def test_missing_frontend_files_are_reported(self):
+        from godseye import web
+
+        original = web.REQUIRED_FILES
+        web.REQUIRED_FILES = original + ("shared/does-not-exist.css",)
+        try:
+            app = fresh_app()
+            problems = Client(app).get("/api/setup").json["problems"]
+            self.assertTrue(any("shared/does-not-exist.css" in p for p in problems))
+        finally:
+            web.REQUIRED_FILES = original
+            fresh_app()
 
     def test_no_secrets_in_frontend(self):
         bad = re.compile(r"GODS_EYE_PASSWORD\s*=|SESSION_SECRET\s*=|api[_-]?key\s*[:=]\s*['\"][A-Za-z0-9]", re.I)
