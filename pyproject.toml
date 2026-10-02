@@ -1,0 +1,17 @@
+[project]
+name = "gods-eye"
+version = "1.0.0"
+description = "GOD'S EYE: a private client discovery system for OG-WAN"
+requires-python = ">=3.12"
+dependencies = [
+    "psycopg[binary]>=3.2",
+    "tzdata>=2024.1",
+]
+
+[tool.uv]
+# An application, not an installable package.
+package = false
+
+[tool.vercel]
+# WSGI callable exported by app.py (the same app that `python app.py` serves locally).
+entrypoint = "app:app"

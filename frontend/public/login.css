@@ -1,0 +1,41 @@
+html, body { height: 100%; }
+.gate {
+  position: relative; min-height: 100dvh; display: grid; place-items: center; align-content: center;
+  padding: max(32px, env(safe-area-inset-top)) 16px max(32px, env(safe-area-inset-bottom)); overflow: hidden;
+}
+.gate-glow {
+  position: absolute; inset: auto; width: 720px; height: 720px; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(closest-side, rgba(232, 182, 90, 0.10), rgba(232, 182, 90, 0.03) 55%, transparent 72%);
+  top: 50%; left: 50%; transform: translate(-50%, -58%);
+}
+.gate::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none; opacity: 0.5;
+  background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: radial-gradient(circle at 50% 42%, #000 0, transparent 60%);
+  -webkit-mask-image: radial-gradient(circle at 50% 42%, #000 0, transparent 60%);
+}
+.gate-card {
+  position: relative; width: min(400px, 100%); display: grid; justify-items: center; text-align: center;
+  animation: rise 0.7s var(--ease) both;
+}
+.gate-mark { width: 76px; height: 76px; margin-bottom: 26px; }
+.gate-mark .iris { animation: iris 4.5s ease-in-out infinite; transform-origin: 32px 32px; }
+.gate-wordmark { margin: 0; font-size: 20px; letter-spacing: 0.42em; padding-left: 0.42em; }
+.gate-eyebrow { margin: 14px 0 0; color: var(--accent); letter-spacing: 0.3em; }
+.gate-lede { margin: 22px 0 34px; font-size: 26px; line-height: 1.2; color: var(--text-2); font-style: italic; }
+.gate-form { width: 100%; display: grid; gap: 12px; }
+.gate-input { min-height: 50px; text-align: center; font-size: 16px; letter-spacing: 0.1em; }
+.gate-input::placeholder { letter-spacing: 0.2em; text-transform: uppercase; font: 500 12px var(--mono); }
+.gate-submit { width: 100%; }
+.gate-msg { min-height: 20px; margin: 4px 0 0; font: 500 12px/1.5 var(--mono); letter-spacing: 0.04em; color: var(--bad); }
+.gate-msg.info { color: var(--text-2); }
+.gate-foot { position: relative; margin-top: 56px; letter-spacing: 0.24em; }
+.shake { animation: shake 0.38s var(--ease); }
+@keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes iris { 0%, 100% { transform: scale(1); } 50% { transform: scale(0.88); } }
+@keyframes shake { 0%, 100% { transform: none; } 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+@media (max-width: 480px) {
+  .gate-lede { font-size: 22px; }
+  .gate-wordmark { font-size: 17px; }
+}
